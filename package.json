@@ -1,0 +1,24 @@
+{
+  "name": "tdh192",
+  "version": "1.0.0",
+  "description": "A project in Digital Humanities for exploring the Israeli cinema industry",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "scrape": "node -r esm index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shaybensimon/tdh192.git"
+  },
+  "author": "Shay Ben Simon and Lior mizrahi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shaybensimon/tdh192/issues"
+  },
+  "homepage": "https://github.com/shaybensimon/tdh192#readme",
+  "dependencies": {
+    "esm": "^3.2.22",
+    "puppeteer": "^1.15.0"
+  }
+}
