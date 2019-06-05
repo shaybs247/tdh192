@@ -9,6 +9,8 @@
 
 import puppeteer from "puppeteer";
 import * as C from "./constants";
+import { isArray } from "util";
+const fs = require("fs");
 
 // Get Aleph-Bet index elements
 const getAlephBetIndexes = async page => {
@@ -43,7 +45,27 @@ const run = async () => {
   movies_urls = movies_urls.map(suffixes =>
     suffixes.map(suffix => C.CINEMA_OF_ISRAEL.concat(suffix))
   );
+
+  // const jsonMoviesList = JSON.parse (movies_urls);
+  // const jsonContent = JSON.stringify(jsonMoviesList);
   console.log(movies_urls);
+  console.log(
+    movies_urls.reduce(
+      (sum, curr) => (isArray(curr) ? (sum = sum + curr.length) : 0),
+      0
+    )
+  );
+  // fs.writeFile(
+  //   "./my.json",
+
+  //   JSON.stringify(movies_urls),
+
+  //   function(err) {
+  //     if (err) {
+  //       console.error("Crap happens");
+  //     }
+  //   }
+  // );
   await browser.close();
 };
 
