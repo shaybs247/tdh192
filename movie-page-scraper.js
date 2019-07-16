@@ -12,21 +12,6 @@ const url2 = "https://www.cinemaofisrael.co.il/%D7%90%D7%91%D7%95-%D7%90%D7%9C-%
 const url3 = "https://www.cinemaofisrael.co.il/%D7%90%D7%91%D7%99%D7%91%D7%94-%D7%90%D7%94%D7%95%D7%91%D7%AA%D7%99/";
 
 
-let extract_movie_name =  async (url) => {
-    request(url, function(err, response, html) {
-        if(!err) {
-            const $ = cheerio.load(html);
-            let name = $(".movie_name").text();
-
-            //console.log(name);
-            fs.writeFile("movie_name.txt", name);
-            //return name;
-            return new Promise(resolve => { resolve(name);});
-        }
-    });
-};
-
-
 let async_extract_movie_name =  async (url) => {
     const html = await requestPromise(url);
     const $ = cheerio.load(html);
@@ -34,6 +19,27 @@ let async_extract_movie_name =  async (url) => {
     // console.log(name);
 
     return name;
+};
+
+let async_extract_imdbID =  async (url) => {
+    const html = await requestPromise(url);
+    const $ = cheerio.load(html);
+    let imdb_link = $("[href*=imdb]").attr("href");
+    let splited_link = imdb_link.split('/'); 
+    let is_id = 0;
+    let res = -1;
+
+    splited_link.forEach(element => {
+        if(is_id == 1) {
+            res = element;
+            is_id = 0;
+        }
+
+        if(element == "title")
+            is_id = 1;       
+    });
+
+    return res;
 };
 
 
@@ -70,8 +76,12 @@ let get_clean_arr =  (url) => {
                 if((into_actors || into_awards) && value.indexOf(',') != -1) {
                     let splited_val = value.split(', '); 
                     value = splited_val[0];   //want only actor's name and not character's name
-                    if(into_actors && splited_val[1].indexOf('\t') == -1 && splited_val[1] != 'בתפקיד עצמו')
-                        another_data[j++] = splited_val[1];
+                    if(into_actors && splited_val[1].indexOf('\t') == -1 && splited_val[1] != 'בתפקיד עצמו') {
+                        let temp = {};
+                        temp[splited_val[0]] = splited_val[1]
+                        another_data[j++] = temp;
+                    }
+                        //another_data[j++] = splited_val[1];
                 }
   
 
@@ -116,6 +126,7 @@ let get_movie_rec = async (url) => {
     let data_arr = [];
 
     res['שם הסרט']  = await async_extract_movie_name(url);
+    res['imdbId']  = await async_extract_imdbID(url);
      
     clean_obj.forEach(element => {
         if(Object.keys(element).length > 2)
@@ -153,11 +164,13 @@ let get_movie_rec = async (url) => {
 
 let test = async (url) => {
      const rec = await get_movie_rec(url);
-    //console.log(name);
+     //let x = await async_extract_imdbID(url);
+     
     console.log(rec);
 };
 
-// test(url1);
+
+ //test(url1);
 // test(url2);
 // test(url3);
 
