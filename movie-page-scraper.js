@@ -12,21 +12,6 @@ const url2 = "https://www.cinemaofisrael.co.il/%D7%90%D7%91%D7%95-%D7%90%D7%9C-%
 const url3 = "https://www.cinemaofisrael.co.il/%D7%90%D7%91%D7%99%D7%91%D7%94-%D7%90%D7%94%D7%95%D7%91%D7%AA%D7%99/";
 
 
-let extract_movie_name =  async (url) => {
-    request(url, function(err, response, html) {
-        if(!err) {
-            const $ = cheerio.load(html);
-            let name = $(".movie_name").text();
-
-            //console.log(name);
-            fs.writeFile("movie_name.txt", name);
-            //return name;
-            return new Promise(resolve => { resolve(name);});
-        }
-    });
-};
-
-
 let async_extract_movie_name =  async (url) => {
     const html = await requestPromise(url);
     const $ = cheerio.load(html);
@@ -153,7 +138,7 @@ let get_movie_rec = async (url) => {
 
 let test = async (url) => {
      const rec = await get_movie_rec(url);
-    //console.log(name);
+     
     console.log(rec);
 };
 
