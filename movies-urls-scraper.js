@@ -9,7 +9,6 @@
 
 import puppeteer from "puppeteer";
 import * as C from "./constants";
-import { isArray } from "util";
 const fs = require("fs");
 
 // Get Aleph-Bet index elements
@@ -48,7 +47,7 @@ const run = async () => {
   fs.writeFile(
     "./movie-urls.json",
 
-    JSON.stringify(movies_urls),
+    JSON.stringify({ movies_urls }),
 
     function(err) {
       if (err) {
