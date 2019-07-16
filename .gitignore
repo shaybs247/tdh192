@@ -25,6 +25,7 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage
+*.lcov
 
 # nyc test coverage
 .nyc_output
@@ -47,6 +48,9 @@ jspm_packages/
 
 # TypeScript v1 declaration files
 typings/
+
+# TypeScript cache
+*.tsbuildinfo
 
 # Optional npm cache directory
 .npm
@@ -87,5 +91,9 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
+
+# Lock files
+package-lock.json
+yarn.lock
 
 # End of https://www.gitignore.io/api/node
