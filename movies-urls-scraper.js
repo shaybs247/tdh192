@@ -38,7 +38,6 @@ const run = async () => {
   await page.goto(`${C.CINEMA_OF_ISRAEL}#`);
   const abcElements = await getAlephBetIndexes(page);
 
-  // await getMovieUrls(page, await abcElements[0].$("a"));
   let movies_urls = await Promise.all(
     abcElements.map(async li => await getMovieUrls(page, await li.$("a")))
   );
@@ -46,26 +45,17 @@ const run = async () => {
     suffixes.map(suffix => C.CINEMA_OF_ISRAEL.concat(suffix))
   );
 
-  // const jsonMoviesList = JSON.parse (movies_urls);
-  // const jsonContent = JSON.stringify(jsonMoviesList);
-  console.log(movies_urls);
-  console.log(
-    movies_urls.reduce(
-      (sum, curr) => (isArray(curr) ? (sum = sum + curr.length) : 0),
-      0
-    )
+  fs.writeFile(
+    "./movie-urls.json",
+
+    JSON.stringify(movies_urls),
+
+    function(err) {
+      if (err) {
+        console.error("Crap happens");
+      }
+    }
   );
-  // fs.writeFile(
-  //   "./my.json",
-
-  //   JSON.stringify(movies_urls),
-
-  //   function(err) {
-  //     if (err) {
-  //       console.error("Crap happens");
-  //     }
-  //   }
-  // );
   await browser.close();
 };
 
