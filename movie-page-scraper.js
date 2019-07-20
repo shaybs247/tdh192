@@ -16,7 +16,6 @@ let async_extract_movie_name =  async (url) => {
     const html = await requestPromise(url);
     const $ = cheerio.load(html);
     let name = $(".movie_name").text();
-    // console.log(name);
 
     return name;
 };
@@ -45,6 +44,16 @@ let async_extract_imdbID =  async (url) => {
 
     return res;
 };
+
+
+let async_extract_dateCreated =  async (url) => {
+    const html = await requestPromise(url);
+    const $ = cheerio.load(html);
+    let year = $("[itemprop*=dateCreated]").text();
+
+    return year;
+};
+
 
 
 //return a promise for array incudes movie data after first cleaning
@@ -141,6 +150,7 @@ let get_movie_rec = async (url) => {
     let data_arr = [];
 
     res['שם הסרט']  = await async_extract_movie_name(url);
+    res['שנת יציאה']  = await async_extract_dateCreated(url);
     res['imdbId']  = await async_extract_imdbID(url);
      
     clean_obj.forEach(element => {
@@ -178,16 +188,15 @@ let get_movie_rec = async (url) => {
 
 
 let test = async (url) => {
-     const rec = await get_movie_rec(url);
-     //let x = await async_extract_imdbID(url);
+    const rec = await get_movie_rec(url);
      
     console.log(rec);
 };
 
 
-// test(url1);
-// test(url2);
-// test(url3);
+test(url1);
+test(url2);
+test(url3);
 
 
 
