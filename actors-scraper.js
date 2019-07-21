@@ -1,7 +1,7 @@
 const requestPromise = require("request-promise");
 const cheerio = require("cheerio");
 var scraper = require("table-scraper");
-import * as C from "./constants";
+//import * as C from "./constants";
 const fs = require("fs");
 
 const url1 =
@@ -196,8 +196,16 @@ const scrapeActor = async url => {
         continue;
       } else if (detail == "") break; //not relevant information
 
-      if (need_arr && !data_arr.includes(value)) data_arr.push(value);
-      else res[detail] = value;
+      
+      let end_idx = value.indexOf(" (");
+      if(end_idx == -1)
+        end_idx = value.indexOf("("); //no space befor '('
+      if(end_idx == -1)
+        end_idx = value.length;
+      let clean_val =   value.substring(0, end_idx); //value without "(year)"
+
+      if (need_arr && !data_arr.includes(value)) data_arr.push(clean_val);
+      else res[detail] = clean_val;
     }
 
     if (need_arr && detail != "") {
@@ -211,11 +219,16 @@ const scrapeActor = async url => {
   return cleanResult(res);
 };
 
+
 export const getActorsRecord = async url => {
   const rec = await scrapeActor(url);
 
+  //console.log(rec);
+
   return rec;
 };
+
+//getActorsRecord(url1);
 
 const extractActorsUrls = async (moviePage, personsGuid) => {
   let count = 0;
