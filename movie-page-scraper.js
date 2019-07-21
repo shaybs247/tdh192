@@ -96,18 +96,15 @@ let get_clean_arr = async url => {
           actor["שם"] = splited_val[0]; //get actor's name
           actor["דמות"] = null;
 
-          if (
-            splited_val[1].indexOf("\t") == -1 &&
-            splited_val[1] != "בתפקיד עצמו"
-          ) {
+          if (splited_val[1].indexOf("\t") == -1)
             actor["דמות"] = splited_val[1]; //get character's name
-          }
-        } else if (into_awards) {
+
+        } 
+        else if (into_awards) {
           value = splited_val[0];
         }
-      } else if (into_actors)
-        //actor without character's name
-        actor = { שם: value, דמות: null };
+      } else if (into_actors)   //actor without character's name
+        actor = { 'שם': value, 'דמות': null };
 
       if (
         value != "" &&
@@ -138,6 +135,7 @@ let get_clean_arr = async url => {
 };
 
 //return a promise for movie record as js object
+//export
 export const getMovieRec = async url => {
   let clean_obj = await get_clean_arr(url);
   let res = {};
@@ -219,3 +217,7 @@ let test = async url => {
 
   console.log(rec);
 };
+
+// test(url1);
+// test(url2);
+// test(url3);
