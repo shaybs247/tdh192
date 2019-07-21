@@ -10,38 +10,20 @@ const url2 =
   "https://www.cinemaofisrael.co.il/%D7%90%D7%91%D7%95-%D7%90%D7%9C-%D7%91%D7%A0%D7%90%D7%AA/";
 const url3 =
   "https://www.cinemaofisrael.co.il/%D7%90%D7%91%D7%99%D7%91%D7%94-%D7%90%D7%94%D7%95%D7%91%D7%AA%D7%99/";
+  const url4 = "https://www.cinemaofisrael.co.il/%d7%99%d7%94%d7%95%d7%93%d7%94-%d7%91%d7%a8%d7%a7%d7%9f/";
 
-const extractActorsName = async url => {
-  const html = await requestPromise(url);
+
+const extractActorsName = async html => {
+  //const html = await requestPromise(url);
   const $ = cheerio.load(html);
   let name = $(`[itemprop="name"]`).text();
 
   return name;
 };
 
-// let async_extract_imdbID = async url => {
-//   const html = await requestPromise(url);
-//   const $ = cheerio.load(html);
-//   let imdb_link = $("[href*=imdb]").attr("href");
-//   let splited_link = imdb_link.split("/");
-//   let is_id = 0;
-//   let res = -1;
 
-//   splited_link.forEach(element => {
-//     if (is_id == 1) {
-//       res = element;
-//       is_id = 0;
-//     }
-
-//     if (element == "title") is_id = 1;
-//   });
-
-//   return res;
-// };
-// --
-
+/*
 //return a promise for array incudes movie data after first cleaning
-
 const cleanResult = res => {
   Object.keys(res).forEach(key => {
     let curr = res[key];
@@ -53,7 +35,9 @@ const cleanResult = res => {
   });
   return res;
 };
+*/
 
+/*
 const scrapeAndOrganize = async url => {
   let count = 0;
   let maxTries = 6;
@@ -66,10 +50,10 @@ const scrapeAndOrganize = async url => {
       if (++count == maxTries) throw e;
     }
   }
-  let movie_data = tableData[0]; //all the data exists in the first table
+  let actor_data = tableData[0]; //all the data exists in the first table
   let res = [];
-  if (!Array.isArray(movie_data)) return [];
-  movie_data.forEach(element => {
+  if (!Array.isArray(actor_data)) return [];
+  actor_data.forEach(element => {
     let clean_dict = {};
     let another_data = {}; //for data after ',' if exists
     let i = 0;
@@ -78,6 +62,7 @@ const scrapeAndOrganize = async url => {
     let into_brief = 0;
     let into_movie_name = 0;
     let into_awards = 0;
+    let into_biography = 0;
 
     for (var key in element) {
       let value = element[key];
@@ -91,6 +76,8 @@ const scrapeAndOrganize = async url => {
         value == "פרסים/פסטיבלים ישראל"
       )
         into_awards = 1;
+      else if(value == 'ביוגראפיה')
+        into_biography = 1;
 
       if ((into_actors || into_awards) && value.indexOf(",") != -1) {
         let splited_val = value.split(", ");
@@ -104,7 +91,7 @@ const scrapeAndOrganize = async url => {
           temp[splited_val[0]] = splited_val[1];
           another_data[j++] = temp;
         }
-        //another_data[j++] = splited_val[1];
+        
       }
 
       if (
@@ -112,7 +99,7 @@ const scrapeAndOrganize = async url => {
         ((into_actors && value.indexOf("\t") == -1) || !into_actors)
       )
         if (
-          !(into_actors || into_brief || into_movie_name || into_awards) &&
+          !(into_actors || into_brief || into_movie_name || into_awards || into_biography) &&
           value.indexOf(", ") != -1
         ) {
           //multiple entities
@@ -129,10 +116,135 @@ const scrapeAndOrganize = async url => {
     into_brief = 0;
     into_movie_name = 0;
     into_awards = 0;
+    into_biography = 0;
   });
 
   return res;
 };
+*/
+
+const scrapeAndOrganize = async url => {
+  let count = 0;
+  let maxTries = 6;
+  let tableData;
+  while (true) {
+    try {
+      tableData = await scraper.get(url);
+      break;
+    } catch (err) {
+      if (++count == maxTries) throw e;
+    }
+  }
+  let actor_data = tableData[0]; //all the data exists in the first table
+  let res = [];
+  if (!Array.isArray(actor_data)) return [];
+  actor_data.forEach(element => {
+    let clean_dict = {};
+    let i = 0;
+    let into_actors = 0;
+    let into_brief = 0;
+    let into_movie_name = 0;
+    let into_awards = 0;
+    let into_biography = 0;
+
+    for (var key in element) {
+      let value = element[key];
+      let actor = {};
+      let end_idx = -1;
+
+      if (value == "משחק") {
+        into_actors = 1;
+      } else if (value == "תקציר") into_brief = 1;
+      else if (value == "שם אחר/לועזי") into_movie_name = 1;
+      else if (
+        value == 'פרסים/פסטיבלים חו"ל' ||
+        value == "פרסים/פסטיבלים ישראל"
+      )
+        into_awards = 1;
+      else if(value == 'ביוגראפיה')
+        into_biography = 1;
+
+
+      if (value.indexOf(",") != -1) {
+        let splited_val = value.split(", ");
+
+        if (into_actors && i++ != 1) {  //ignore double record in first movie
+          end_idx = splited_val[0].indexOf(" (");
+          if(end_idx != -1) {
+            actor["שם הסרט"] = splited_val[0].substring(0, end_idx);
+            actor["שנה"] = splited_val[0].substring(end_idx + 2, end_idx + 6);  //assume year has 4 digits
+          }
+          else {
+            actor["שם הסרט"] = splited_val[0];
+            actor["שנה"] = null;
+          }
+
+          actor["דמות"] = null;
+
+          if (splited_val[1].indexOf("\t") == -1)
+            actor["דמות"] = splited_val[1]; //get character's name
+        } 
+        else if (into_awards) {
+          value = splited_val[0];
+        }
+      } else if (into_actors) {   //actor without character's name
+        end_idx = value.indexOf(" (");
+        if(end_idx != -1)  {
+          actor["שם הסרט"] = value.substring(0, end_idx);
+          actor["שנה"] = value.substring(end_idx + 2, end_idx + 6);  //assume year has 4 digits
+          actor["דמות"] = null;
+        }
+        else
+          actor = { 'שם' : value, 'שנה' : null,'דמות' : null };
+      }
+      
+
+      
+      // if (
+      //   value != "" &&
+      //   ((into_actors && value.indexOf("\t") == -1) || !into_actors)
+      // )
+      //   if (
+      //     !(into_actors || into_brief || into_movie_name || into_awards || into_biography) &&
+      //     value.indexOf(", ") != -1
+      //   ) {
+      //     //multiple entities
+      //     value.split(", ").forEach(element => {
+      //       clean_dict[i++] = element;
+      //     });
+      //   } else clean_dict[i++] = value;
+        
+
+       if (
+        value != "" &&
+        ((into_actors && value.indexOf("\t") == -1) || !into_actors)
+      )
+        if (
+          !(into_actors || into_brief || into_movie_name || into_awards || into_biography) &&
+          value.indexOf(", ") != -1
+        ) {
+          //multiple entities
+          value.split(", ").forEach(element => {
+            clean_dict[i++] = element;
+          });
+        } else if (into_actors && value != "משחק") {
+          clean_dict[i++] = actor;
+        } else clean_dict[i++] = value;
+
+    }
+
+    if (clean_dict != {}) res.push(clean_dict);
+
+    into_actors = 0;
+    into_brief = 0;
+    into_movie_name = 0;
+    into_awards = 0;
+    into_biography = 0;
+  });
+
+  return res;
+};
+
 
 //return a promise for movie record as js object
 const scrapeActor = async url => {
@@ -140,6 +252,8 @@ const scrapeActor = async url => {
   let res = {};
   let relevant_details = [
     "תקציר",
+    "תאריך לידה",
+    "ביוגראפיה",
     "שם אחר/לועזי",
     "משחק",
     "בימוי",
@@ -177,7 +291,7 @@ const scrapeActor = async url => {
   while (true) {
     try {
       const html = await requestPromise(url);
-      res["שם"] = await extractActorsName(url);
+      res["שם"] = await extractActorsName(html);
       break;
     } catch (err) {
       if (++count == maxTries) throw e;
@@ -190,21 +304,23 @@ const scrapeActor = async url => {
 
     for (var key in element) {
       let value = element[key];
+      let clean_val = value;
 
       if (detail == "" && relevant_details.includes(value)) {
         detail = value;
         continue;
       } else if (detail == "") break; //not relevant information
 
-      
-      let end_idx = value.indexOf(" (");
-      if(end_idx == -1)
-        end_idx = value.indexOf("("); //no space befor '('
-      if(end_idx == -1)
-        end_idx = value.length;
-      let clean_val =   value.substring(0, end_idx); //value without "(year)"
+      if(detail != "ביוגראפיה" && detail != "משחק") {
+        let end_idx = value.indexOf(" (");
+        if(end_idx == -1)
+          end_idx = value.indexOf("("); //no space befor '('
+        if(end_idx == -1)
+          end_idx = value.length;
+        clean_val =   value.substring(0, end_idx); //value without "(year)"
+      }
 
-      if (need_arr && !data_arr.includes(value)) data_arr.push(clean_val);
+      if (need_arr && !data_arr.includes(clean_val)) data_arr.push(clean_val);
       else res[detail] = clean_val;
     }
 
@@ -215,20 +331,21 @@ const scrapeActor = async url => {
 
     detail = "";
   });
-  // return res;
-  return cleanResult(res);
+
+  return res;
+  //return cleanResult(res);
 };
 
-
+//export
 export const getActorsRecord = async url => {
   const rec = await scrapeActor(url);
 
-  //console.log(rec);
+  // console.log(rec);
 
   return rec;
 };
 
-//getActorsRecord(url1);
+// getActorsRecord(url4);
 
 const extractActorsUrls = async (moviePage, personsGuid) => {
   let count = 0;
