@@ -16,7 +16,6 @@ let async_extract_movie_name =  async (url) => {
     const html = await requestPromise(url);
     const $ = cheerio.load(html);
     let name = $(".movie_name").text();
-    // console.log(name);
 
     return name;
 };
@@ -25,9 +24,13 @@ let async_extract_imdbID =  async (url) => {
     const html = await requestPromise(url);
     const $ = cheerio.load(html);
     let imdb_link = $("[href*=imdb]").attr("href");
+
+    if(imdb_link == null)
+        return null;
+
     let splited_link = imdb_link.split('/'); 
     let is_id = 0;
-    let res = -1;
+    let res = null;
 
     splited_link.forEach(element => {
         if(is_id == 1) {
@@ -43,6 +46,16 @@ let async_extract_imdbID =  async (url) => {
 };
 
 
+let async_extract_dateCreated =  async (url) => {
+    const html = await requestPromise(url);
+    const $ = cheerio.load(html);
+    let year = $("[itemprop*=dateCreated]").text();
+
+    return year;
+};
+
+
+
 //return a promise for array incudes movie data after first cleaning
 let get_clean_arr =  (url) => {
     const result =  scraper.get(url).then(function(tableData) {
@@ -51,7 +64,7 @@ let get_clean_arr =  (url) => {
 
         movie_data.forEach(element => {
             let clean_dict = {};
-            let another_data = {};    //for data after ',' if exists
+            //let another_data = {};    //for data after ',' if exists
             let i = 0;
             let j = 0;
             let into_actors = 0;
@@ -61,10 +74,11 @@ let get_clean_arr =  (url) => {
 
             for(var key in element) {
                 let value = element[key];
+                let actor = {};
 
                 if(value == 'משחק') {
                     into_actors = 1;
-                    another_data[j++] = "דמויות";
+                    //another_data[j++] = "דמויות";
                 }
                 else if(value == 'תקציר')
                     into_brief = 1;
@@ -73,16 +87,25 @@ let get_clean_arr =  (url) => {
                 else if(value ==  'פרסים/פסטיבלים חו"ל' || value == 'פרסים/פסטיבלים ישראל')
                     into_awards = 1;
 
-                if((into_actors || into_awards) && value.indexOf(',') != -1) {
-                    let splited_val = value.split(', '); 
-                    value = splited_val[0];   //want only actor's name and not character's name
-                    if(into_actors && splited_val[1].indexOf('\t') == -1 && splited_val[1] != 'בתפקיד עצמו') {
-                        let temp = {};
-                        temp[splited_val[0]] = splited_val[1]
-                        another_data[j++] = temp;
+                if(value.indexOf(',') != -1) {
+                    let splited_val = value.split(', ');  
+
+                    if(into_actors) {
+                        actor['שם'] = splited_val[0];   //get actor's name
+                        actor['דמות'] = null;
+
+                        if(splited_val[1].indexOf('\t') == -1 && splited_val[1] != 'בתפקיד עצמו') {
+                            actor['דמות'] = splited_val[1];      //get character's name
+                        } 
                     }
-                        //another_data[j++] = splited_val[1];
+                     
+                    else if(into_awards) {
+                        value = splited_val[0];  
+                    }
+                
                 }
+                else if(into_actors)    //actor without character's name
+                    actor = {'שם' : value , 'דמות' : null};
   
 
                 if (value != '' && ((into_actors && value.indexOf('\t') == -1) || !into_actors))
@@ -91,6 +114,9 @@ let get_clean_arr =  (url) => {
                             clean_dict[i++] = element;     
                         });
                     }
+                    else if(into_actors && value != 'משחק') {
+                        clean_dict[i++] = actor;
+                    }
                     else
                         clean_dict[i++] = value;     
                 
@@ -98,8 +124,6 @@ let get_clean_arr =  (url) => {
 
             if(clean_dict != {})
                 res.push(clean_dict);
-            if(into_actors && another_data != {})
-                res.push(another_data);
 
             into_actors = 0;
             into_brief = 0;
@@ -120,12 +144,13 @@ let get_clean_arr =  (url) => {
 let get_movie_rec = async (url) => {
     let clean_obj =  await get_clean_arr(url);
     let res = {};
-    let relevant_details = ['תקציר', 'שם אחר/לועזי', 'משחק', 'בימוי', 'ע.בימוי', 'תסריט', 'ניהול תסריט', 'ע.הפקה', 'ע.צילום', 'חברת הפקה', 'סטילס', 'ליהוק', 'ע.בימוי', 'הפקה','הקלטת קול', 'בום', 'איפור', 'צילום', 'ע.צילום','עריכה', 'ע.עריכה', 'מוזיקה', 'פרסים/פסטיבלים חו"ל', 'פרסים/פסטיבלים ישראל', 'מספר צופים בישראל', 'דמויות', 'תקציב'];
+    let relevant_details = ['תקציר', 'שם אחר/לועזי', 'משחק', 'בימוי', 'ע.בימוי', 'תסריט', 'ניהול תסריט', 'ע.הפקה', 'ע.צילום', 'חברת הפקה', 'סטילס', 'ליהוק', 'ע.בימוי', 'הפקה','הקלטת קול', 'בום', 'איפור', 'צילום', 'ע.צילום','עריכה', 'ע.עריכה', 'מוזיקה', 'פרסים/פסטיבלים חו"ל', 'פרסים/פסטיבלים ישראל', 'מספר צופים בישראל', 'תקציב'];
     let detail = '';
     let need_arr = 0;
     let data_arr = [];
 
     res['שם הסרט']  = await async_extract_movie_name(url);
+    res['שנת יציאה']  = await async_extract_dateCreated(url);
     res['imdbId']  = await async_extract_imdbID(url);
      
     clean_obj.forEach(element => {
@@ -163,16 +188,15 @@ let get_movie_rec = async (url) => {
 
 
 let test = async (url) => {
-     const rec = await get_movie_rec(url);
-     //let x = await async_extract_imdbID(url);
+    const rec = await get_movie_rec(url);
      
     console.log(rec);
 };
 
 
- //test(url1);
-// test(url2);
-// test(url3);
+test(url1);
+test(url2);
+test(url3);
 
 
 
