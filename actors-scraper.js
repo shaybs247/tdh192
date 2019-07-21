@@ -2,6 +2,7 @@ const requestPromise = require("request-promise");
 const cheerio = require("cheerio");
 var scraper = require("table-scraper");
 import * as C from "./constants";
+const fs = require("fs");
 
 const url1 =
   "https://www.cinemaofisrael.co.il/%D7%90%D7%9C%D7%95%D7%9F-%D7%90%D7%95%D7%9C%D7%90%D7%A8%D7%A6%27%D7%99%D7%A7/";
@@ -54,9 +55,20 @@ const cleanResult = res => {
 };
 
 const scrapeAndOrganize = async url => {
-  const tableData = await scraper.get(url);
+  let count = 0;
+  let maxTries = 6;
+  let tableData;
+  while (true) {
+    try {
+      tableData = await scraper.get(url);
+      break;
+    } catch (err) {
+      if (++count == maxTries) throw e;
+    }
+  }
   let movie_data = tableData[0]; //all the data exists in the first table
   let res = [];
+  if (!Array.isArray(movie_data)) return [];
   movie_data.forEach(element => {
     let clean_dict = {};
     let another_data = {}; //for data after ',' if exists
@@ -162,8 +174,15 @@ const scrapeActor = async url => {
   let detail = "";
   let need_arr = 0;
   let data_arr = [];
-
-  res["שם"] = await extractActorsName(url);
+  while (true) {
+    try {
+      const html = await requestPromise(url);
+      res["שם"] = await extractActorsName(url);
+      break;
+    } catch (err) {
+      if (++count == maxTries) throw e;
+    }
+  }
 
   clean_obj.forEach(element => {
     if (Object.keys(element).length > 2) need_arr = 1;
@@ -192,14 +211,25 @@ const scrapeActor = async url => {
   return cleanResult(res);
 };
 
-const getActorsRecord = async url => {
+export const getActorsRecord = async url => {
   const rec = await scrapeActor(url);
 
   return rec;
 };
 
-const extractActorsUrls = async moviePage => {
-  const html = await requestPromise(moviePage);
+const extractActorsUrls = async (moviePage, personsGuid) => {
+  let count = 0;
+  let maxTries = 3;
+  let html;
+  while (true) {
+    try {
+      html = await requestPromise(moviePage);
+      break;
+    } catch (err) {
+      if (++count == maxTries) return;
+    }
+  }
+
   const $ = cheerio.load(html);
   const interstedIn = ["הפקה", "בימוי", "תסריט"];
   // get actors suffix
@@ -211,20 +241,49 @@ const extractActorsUrls = async moviePage => {
   // get interesting suffixes
   $('[style="color:#929496;"]').each((index, value) => {
     if (interstedIn.includes($(value).text())) {
-      suffixes.push(
-        $(value.parent)
-          .find("a")
-          .get(0).attribs.href
-      );
+      let suff = $(value.parent)
+        .find("a")
+        .get(0);
+      if (suff && suff.attribs && suff.attribs.href)
+        // console.log(suff && suff.attribs && suff.attribs.href);
+        suffixes.push(suff.attribs.href);
     }
   });
+
   // create urls
-  return suffixes.map(suffix => C.CINEMA_OF_ISRAEL.concat(suffix.slice(1)));
+  suffixes.forEach(suffix => personsGuid.add(suffix.slice(1)));
+};
+
+const asyncForEach = async (array, callback, startFrom = 0) => {
+  for (let index = startFrom; index < array.length; index++) {
+    await callback(array[index], index, array);
+  }
 };
 
 (async () => {
   // await getActorsRecord(url1);
-  await extractActorsUrls(
-    "https://www.cinemaofisrael.co.il/%d7%a0%d7%95%d7%a8%d7%9e%d7%9f-%d7%a2%d7%9c%d7%99%d7%99%d7%aa%d7%95-%d7%94%d7%9e%d7%aa%d7%95%d7%a0%d7%94-%d7%95%d7%a0%d7%a4%d7%99%d7%9c%d7%aa%d7%95-%d7%94%d7%aa%d7%9c%d7%95%d7%9c%d7%94-%d7%a9%d7%9c/"
+  const movieUrls = require("./movie-urls.json");
+  const movieUrlsAsArray = movieUrls["moviesUrls"];
+  const personsGuid = new Set();
+
+  await asyncForEach(movieUrlsAsArray, async (letterArray, index) => {
+    console.log("letter no. ", index);
+    await asyncForEach(letterArray, async url => {
+      console.log(url);
+      await extractActorsUrls(url, personsGuid);
+    });
+  });
+
+  const personsAsArray = Array.from(personsGuid);
+  fs.writeFile(
+    "./persons-urls.json",
+
+    JSON.stringify({ personsAsArray }),
+
+    function(err) {
+      if (err) {
+        console.error("Crap happens");
+      }
+    }
   );
 })();
