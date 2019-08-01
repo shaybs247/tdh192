@@ -3,7 +3,8 @@ const fs = require("fs");
 let failedUrls = fs.createWriteStream("failed-urls.txt");
 import * as C from "./constants";
 import { getMovieRec } from "./movie-page-scraper";
-import { getActorsRecord } from "./actors-scraper";
+import { getActorsRecord, extractActorsNameByUrl } from "./actors-scraper";
+import { getPersonDataByName } from "./wikidata-handler";
 
 // if movies-urls.json not found you should run 'npm run scrape-urls'
 const movieUrls = require("./movie-urls.json");
@@ -32,24 +33,47 @@ const addMovieToDB = async (db, movie, url) => {
 
 const addPersonToDB = async (db, person, url) => {
   const name = person["שם"];
+  console.log(name);
   const personsCollection = db.collection("persons");
+  console.log(url);
   return personsCollection.findOneAndUpdate(
     { שם: name },
     {
-      $setOnInsert: {
-        ...person,
-        COFID: url.slice(73)
+      $set: {
+        // ...person,
+        COFID: typeof url === "string" ? url.substring(3) : ""
       }
     },
     {
       returnOriginal: false,
-      upsert: true
+      upsert: false
     }
   );
 };
 
-const asyncForEach = async (array, callback, startFrom = 0) => {
-  for (let index = startFrom; index < array.length; index++) {
+const updateWikiData = async (db, person, url) => {
+  const name = person["שם"];
+  console.log(name);
+  const personsCollection = db.collection("persons");
+  console.log(url);
+  return personsCollection.findOneAndUpdate(
+    { שם: name },
+    {
+      $set: {
+        ...person
+      }
+    },
+    {
+      returnOriginal: false,
+      upsert: false
+    }
+  );
+};
+
+const asyncForEach = async (array, callback, startFrom = 0, to) => {
+  console.log(startFrom, to);
+  for (let index = startFrom; index < to; index++) {
+    console.log("index", index);
     await callback(array[index], index, array);
   }
 };
@@ -80,27 +104,51 @@ const insertMoviesToDb = async db => {
   console.log("finished insert movies to db");
 };
 
-const insertPersonsToDb = async db => {
+const insertPersonsToDb = async (db, from, to) => {
   const personsUrlsAsArray = personsUrls["personsAsArray"];
-  await asyncForEach(personsUrlsAsArray, async (suffix, index) => {
-    console.log(C.CINEMA_OF_ISRAEL.concat(suffix));
-    const url = C.CINEMA_OF_ISRAEL.concat(suffix);
-    const personRecord = await getActorsRecord(url);
-    console.log(personRecord);
-    if (!personRecord) {
-      failedUrls.write(url.concat("\n"), "utf-8");
-      return;
-    }
-    try {
-      await addPersonToDB(db, personRecord, suffix);
-    } catch (err) {
-      throw err;
-    }
-  });
+  await asyncForEach(
+    personsUrlsAsArray,
+    async (suffix, index) => {
+      console.log(C.CINEMA_OF_ISRAEL.concat(suffix));
+      const url = C.CINEMA_OF_ISRAEL.concat(suffix);
+      const personRecord = await extractActorsNameByUrl(url);
+      console.log(personRecord);
+      if (!personRecord) {
+        failedUrls.write(url.concat("\n"), "utf-8");
+        return;
+      }
+      try {
+        await addPersonToDB(db, personRecord, suffix);
+      } catch (err) {
+        throw err;
+      }
+    },
+    from,
+    to
+  );
   console.log("finished insert movies to db");
 };
 
+const crossWikiDataWithPerson = async db => {
+  const personsCollection = db.collection("persons");
+  const cursor = personsCollection.find();
+
+  while (await cursor.hasNext()) {
+    const item = await cursor.next();
+    let data;
+    try {
+      data = await getPersonDataByName(item["שם"]);
+      data["שם"] = item["שם"];
+      console.log(data);
+      await updateWikiData(db, data);
+    } catch {}
+  }
+};
+
 (async () => {
+  const from = process.argv[2];
+  const to = process.argv[3];
+
   let db;
   try {
     const client = await MongoClient.connect(databaseUrl, {
@@ -112,5 +160,6 @@ const insertPersonsToDb = async db => {
   }
 
   // await insertMoviesToDb(db);
-  await insertPersonsToDb(db);
+  if (from === "wd") await crossWikiDataWithPerson(db);
+  else await insertPersonsToDb(db, from, to);
 })();

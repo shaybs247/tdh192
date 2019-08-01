@@ -35,11 +35,18 @@ const getWikidataById = async id => {
   });
   const res = await fetch(url);
   const jsonEntity = await res.json();
-  return (await wdk.parse.wd.entities(jsonEntity))[id];
+  let parsedId;
+  try {
+    parsedId = (await wdk.parse.wd.entities(jsonEntity))[id];
+    return id;
+  } catch {
+    return -1;
+  }
 };
 
 const getLabelById = async id => {
   const entity = await getWikidataById(id);
+  if (entity === -1) return -1;
   const labels = getValue(entity, "labels");
   return getValue(labels, "he");
 };
@@ -91,4 +98,4 @@ const run = async () => {
   console.log(await getPersonDataByName("שייקה אופיר"));
 };
 
-run();
+// run();

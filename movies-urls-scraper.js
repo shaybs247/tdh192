@@ -11,57 +11,6 @@
 import * as C from "./constants";
 const fs = require("fs");
 
-// // Get Aleph-Bet index elements
-// const getAlephBetIndexes = async page => {
-//   const abcListContainer = await page.$(C.ALPHABET);
-//   const listElements = await abcListContainer.$$("li");
-
-//   return listElements;
-// };
-
-// const getMovieUrls = async (page, letter) => {
-//   await letter.click();
-//   setTimeout(() => {}, 3000);
-
-//   await page.waitForSelector(C.MOVIES_LIST);
-//   await page.waitForSelector(".roll");
-//   const moviesUList = await page.$(C.MOVIES_LIST);
-//   await page.waitForSelector("[data-title]");
-
-//   return await moviesUList.$$eval("a", anchors =>
-//     anchors.map(el => el.getAttribute("href"))
-//   );
-// };
-
-// const asyncForEach = async (array, callback, startFrom = 0) => {
-//   for (let index = startFrom; index < array.length; index++) {
-//     await callback(array[index], index, array);
-//   }
-// };
-
-// const run = async () => {
-//   const browser = await puppeteer.launch();
-//   const page = await browser.newPage();
-//   await page.goto(`${C.CINEMA_OF_ISRAEL}#`);
-//   const abcElements = await getAlephBetIndexes(page);
-
-//   // await Promise.all(
-//   //   abcElements.map(async li =>
-//   //     console.log(await li.$eval("a", el => el.innerHTML))
-//   //   )
-//   // );
-//   let movies_urls = [];
-//   for (let i = 0; i < abcElements.length; i++) {
-//     const letter = abcElements[i];
-//     const aTag = await letter.$("a");
-//     const url = await getMovieUrls(page, aTag);
-//     movies_urls.push(url);
-//   }
-
-//   console.log(movies_urls);
-
-//   await browser.close();
-// };
 const axios = require("axios");
 (async () => {
   const letters = [
