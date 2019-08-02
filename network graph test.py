@@ -1,11 +1,11 @@
 
-
 import networkx as nx
 import matplotlib.pyplot as plt
 from pylab import *
 from networkx.readwrite import json_graph
 import json
 from pymongo import MongoClient
+from bidi import algorithm as bidialg
 
 
 #return array with movie's name and movie's crew
@@ -37,118 +37,79 @@ def get_movie_cast(movieRec):
 
 
 
-client = MongoClient('localhost', 27017)
-db = client["cinema-of-israel-db"]["movies"]
+#input: graph g and flag edgeData. When edgeData 1, present which movie connect the entities
+#output: g chart
+def draw_graph(g, edgeData):
+    if edgeData:
+        nx.draw_networkx_edge_labels(g, pos = nx.spring_layout(g))
 
-# m = db.find_one({'שם הסרט': 'אבא גנוב'})
-# print(m.count_documents())
-# print(get_movie_cast(m))
-# print(m["שם הסרט"])
-# ar = [1,2,3] + [4]
-# print(isinstance("יהודה ברקן", list))
-# print(ar)
+    nx.draw(g, with_labels = True, font_weight = 'bold')
+    plt.show()
 
-
-movies_list = db.find({})
-all_casts = []
-for rec in movies_list:
-    all_casts.append(get_movie_cast(rec))
-
-#every movie represents by clique sub graph
-all_subgraph = [nx.complete_graph(x[1]) for x in all_casts]
-
-#set edges attribute to movie's name for each sub graph
-for x in range (0, len(all_casts)):
-    nx.set_edge_attributes(all_subgraph[x], all_casts[x][0], "שם הסרט")
-
-#union graph includes all movies
-israel_cinema_relations = nx.compose_all(all_subgraph)
-
-#save graph in json format
-data = json_graph.adjacency_data(israel_cinema_relations)
-with open('json_graph.txt', 'w') as outfile:
-    json.dump(data, outfile)
-
-
-nx.draw(israel_cinema_relations, with_labels=True, font_weight='bold')
-plt.show()
-
-
-########## until here relevant code ##############
+    return
 
 
 
+def create_relations_graph():
+    client = MongoClient('localhost', 27017)
+    db = client["cinema-of-israel-db"]["movies"]
+
+    movies_list = db.find({})
+    all_casts = []
+    for rec in movies_list:
+        all_casts.append(get_movie_cast(rec))
+
+    #every movie represents by clique sub graph
+    all_subgraph = [nx.complete_graph(x[1]) for x in all_casts]
+
+    #set edges attribute to movie's name for each sub graph
+    for x in range (0, len(all_casts)):
+        nx.set_edge_attributes(all_subgraph[x], all_casts[x][0], "שם הסרט")
+
+    #union graph includes all movies
+    israel_cinema_relations = nx.compose_all(all_subgraph)
+
+    #save graph in json format
+    data = json_graph.adjacency_data(israel_cinema_relations)
+    with open('json_graph.json', 'w') as outfile:
+        json.dump(data, outfile)
+
+    return
 
 
 
-
-# G = nx.Graph()
-#
-# G.add_nodes_from([1, 2, 3])
-# G.add_edges_from([(1, 2), (1, 3)])
-#
-# G.add_edge(1, 2, movie= "אבא גנוב" )
-
-movie_subGraph1 = nx.complete_graph(["יהודה ברקן", "זאב רווח", "ליאור מזרחי", "אלעד כהן", "act 1", "act 2"])
-movie_subGraph2 = nx.complete_graph(["משה יבגי", "זאב רווח", "ליאור אשכנזי", "אסי כהן", "act 2", "act 3"])
-movie_subGraph3 = nx.complete_graph(["act 3", "אסי לוי"])
-
-nx.set_edge_attributes(movie_subGraph1, "אבא גנוב", "שם הסרט")
-nx.set_edge_attributes(movie_subGraph2, "שקר כלשהו 2", "שם הסרט")
-nx.set_edge_attributes(movie_subGraph3, "אביבה אהובתי", "שם הסרט")
-
-
-# there is compose_all method for multiple movies
-#U = nx.compose(movie_subGraph1, movie_subGraph2)
-U = nx.compose_all([movie_subGraph1, movie_subGraph2, movie_subGraph3])
-
-#save graph as json
-data = json_graph.adjacency_data(U)
-with open('json_graph.txt', 'w') as outfile:
-    json.dump(data, outfile)
-
-
-
-#nx.draw_networkx_edge_labels(U, pos=nx.spring_layout(U))
-# nx.draw(U, with_labels = True, font_weight = 'bold')
-# plt.show()
-
-
-#restore graph from json, find and show connection
-with open('json_graph.txt', 'r') as json_file:
-    restoreG = json_graph.adjacency_graph(json.load(json_file))
-    connection = nx.Graph()
+#input: name of json graph file to restore X first entity name X second entity name
+#restore relations graph from json,find and show connection between name1 and name2 (if exists)
+def find_connection(graph_file, name1, name2):
     try:
-        name1 = "יהודה ברקן"
-        name2 = "אסי לוי"
-        relation_path = nx.shortest_path(restoreG, source= name1, target= name2)
-        nx.add_path(connection, relation_path)
+        with open(graph_file, 'r') as json_file:
+            restore_graph = json_graph.adjacency_graph(json.load(json_file))
+            connection = nx.Graph()
 
-        #add movie wich connect
-        for x in range (0, len(relation_path) - 1):
-            movie_name = restoreG[relation_path[x]][relation_path[x + 1]]["שם הסרט"]
-            connection[relation_path[x]][relation_path[x + 1]]["שם הסרט"] = movie_name
-            # print(movie_name)
 
-        nx.draw_networkx_edge_labels(connection, pos=nx.spring_layout(connection))
-        nx.draw(connection, with_labels=True, font_weight='bold')
-        plt.show()
+            relation_path = nx.shortest_path(restore_graph, source = name1, target = name2)
+            #name right to left
+            relation_rtl = [bidialg.get_display(y) for y in relation_path]
+            nx.add_path(connection, relation_rtl)
+
+            # add movie which connect
+            for x in range(0, len(relation_path) - 1):
+                movie_name = bidialg.get_display(restore_graph[relation_path[x]][relation_path[x + 1]]["שם הסרט"])
+                connection[relation_rtl[x]][relation_rtl[x + 1]][bidialg.get_display("שם הסרט")] = movie_name
+
+            draw_graph(connection, True)
+
+    except FileNotFoundError:
+        print("Failed open json file")
     except:
         print("There is no connection between " , name1, " and ", name2)
 
+    return
 
 
 
 
-
-# find way append save big graph as json and retrieve data at each query
-
-
-# print(movie_subGraph.size(), movie_subGraph.nodes())
-# nx.set_edge_attributes(movie_subGraph1, "אבא גנוב", "שם הסרט")
-# edge_labels = nx.draw_networkx_edge_labels(movie_subGraph1, pos=nx.spring_layout(movie_subGraph1))
-# nx.draw(movie_subGraph1, with_labels = True, font_weight = 'bold')
-# plt.show()
-
+#this is the query
+find_connection("json_graph.json", "גיל רוזנטל", "פיני טבגר")
 
 
