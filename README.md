@@ -1,5 +1,5 @@
 # Project: Israeli cinema industry social network
-<br />
+
 ## Description
 As part of course [Topics in Digital Humanities](https://www.cs.bgu.ac.il/~tdh192/Main) we decided to focus in Israeli cinema industry from country establishment (1948) since today (2019). Our topic to explore was **mapping social network** of every involved people in this industry \- from derectors and actors to sound men and cinematographers.<br />
 A **connection** between two entities is a transitive relation. Connection means x related to y If and only if x,y took part in same movie.
