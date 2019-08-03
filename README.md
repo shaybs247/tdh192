@@ -1,7 +1,7 @@
 # Project: Israeli cinema industry social network
-
+<br />
 ## Description
-As part of course [Topics in Digital Humanities](https://www.cs.bgu.ac.il/~tdh192/Main) we decided to focus in Israeli cinema industry from country establishment (1948) since today (2019). Our topic to explore was **mapping social network** of every involved people in this industry \- from derectors and actors to sound men and cinematographers.__
+As part of course [Topics in Digital Humanities](https://www.cs.bgu.ac.il/~tdh192/Main) we decided to focus in Israeli cinema industry from country establishment (1948) since today (2019). Our topic to explore was **mapping social network** of every involved people in this industry \- from derectors and actors to sound men and cinematographers.<br />
 A **connection** between two entities is a transitive relation. Connection means x related to y If and only if x,y took part in same movie.
 
 We extracted the data for the social network from [cinemaofisrael site](https://www.cinemaofisrael.co.il/%d7%aa%d7%95%d7%9b%d7%9f-%d7%a2%d7%a0%d7%99%d7%99%d7%a0%d7%99%d7%9d/) by a web crawler writen in JavaScript. The data has expanded by Wikidata in order to create a wide and comprehensive MongoDB database (database details below). 
@@ -32,7 +32,7 @@ For discover connection between two cinema entities, use `find_connection("json_
 Source and target nodes will be in red color. Each edge specipies the movie which connect the entities.
 
 example:
-`find_connection("json_graph.json", "גיל רוזנטל", "פיני טבגר")`__
+`find_connection("json_graph.json", "גיל רוזנטל", "פיני טבגר")`<br />
 output: ![image](https://github.com/shaybensimon/tdh192/blob/master/example_connection_graph.png?raw=true)
 
 
