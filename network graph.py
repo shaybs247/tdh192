@@ -1,4 +1,3 @@
-
 import networkx as nx
 import matplotlib.pyplot as plt
 from pylab import *
@@ -37,13 +36,43 @@ def get_movie_cast(movieRec):
 
 
 
-#input: graph g and flag edgeData. When edgeData 1, present which movie connect the entities
+#input: graph g X flag edgeData X source and target nodes. When edgeData = True , present which movie connect the entities
 #output: g chart
-def draw_graph(g, edgeData):
-    if edgeData:
-        nx.draw_networkx_edge_labels(g, pos = nx.spring_layout(g))
+def draw_graph(g, edgeData, source, target):
+    pos = nx.spring_layout(g)
 
-    nx.draw(g, with_labels = True, font_weight = 'bold')
+    internal_nodes = []
+    for n in g.nodes:
+        if n != source and n != target:
+            internal_nodes.append(n)
+
+    nx.draw_networkx_nodes(g, pos,
+                           nodelist= [source, target],
+                           node_color='red',
+                           node_size=600,
+                           alpha=0.8)
+    nx.draw_networkx_nodes(g, pos,
+                           nodelist= internal_nodes,
+                           node_color='blue',
+                           node_size=500,
+                           alpha=0.8)
+
+    nx.draw_networkx_edges(g, pos, width=1.0, alpha=0.5)
+
+    #graph labels
+    node_labels = {}
+    node_labels[target] = target
+    node_labels[source] = source
+    for node in internal_nodes:
+        node_labels[node] = node
+    if edgeData:
+        edge_labels = {e: g.get_edge_data(*e)["טרסה םש"] for e in g.edges}
+        nx.draw_networkx_edge_labels(g, pos, edge_labels)
+
+
+    nx.draw_networkx_labels(g, pos, node_labels, font_size=16)
+    plt.axis('off')
+    plt.savefig("connection_graph.png")  # save as png
     plt.show()
 
     return
@@ -97,7 +126,7 @@ def find_connection(graph_file, name1, name2):
                 movie_name = bidialg.get_display(restore_graph[relation_path[x]][relation_path[x + 1]]["שם הסרט"])
                 connection[relation_rtl[x]][relation_rtl[x + 1]][bidialg.get_display("שם הסרט")] = movie_name
 
-            draw_graph(connection, True)
+            draw_graph(connection, True, relation_rtl[0], relation_rtl[len(relation_rtl) - 1])
 
     except FileNotFoundError:
         print("Failed open json file")
@@ -111,5 +140,3 @@ def find_connection(graph_file, name1, name2):
 
 #this is the query
 find_connection("json_graph.json", "גיל רוזנטל", "פיני טבגר")
-
-
