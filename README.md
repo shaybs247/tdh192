@@ -9,6 +9,8 @@ Web crawler files:
 + [Movies scraper](https://github.com/shaybensimon/tdh192/blob/master/movie-page-scraper.js)
 + [Actors scraper](https://github.com/shaybensimon/tdh192/blob/master/actors-scraper.js)
 + [Wikidata scraper](https://github.com/shaybensimon/tdh192/blob/master/wikidata-handler.js)
+Crawlers and Database integation:
++ [JS index file](https://github.com/shaybensimon/tdh192/blob/master/index.js)
 
 All the connections in Israeli cinema industry has mapped from our database to massive [social network graph](https://github.com/shaybensimon/tdh192/blob/master/json_graph.json.zip) which saved in Json format.
 For discover connection between two cinema entities, use `find_connection("json_graph.json", name1, name2)` from [this file](https://github.com/shaybensimon/tdh192/blob/master/network%20graph.py). To build and handle the graphs we use NetworkX library.
