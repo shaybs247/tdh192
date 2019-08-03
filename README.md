@@ -9,6 +9,7 @@ Web crawler files:
 + [Movies scraper](https://github.com/shaybensimon/tdh192/blob/master/movie-page-scraper.js)
 + [Actors scraper](https://github.com/shaybensimon/tdh192/blob/master/actors-scraper.js)
 + [Wikidata scraper](https://github.com/shaybensimon/tdh192/blob/master/wikidata-handler.js)
+
 Crawlers and Database integation:
 + [JS index file](https://github.com/shaybensimon/tdh192/blob/master/index.js)
 
