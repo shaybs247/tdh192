@@ -46,6 +46,9 @@ Queries from [this file](https://github.com/shaybensimon/tdh192/blob/master/netw
 Examples: <br />
 `find_connection("json_graph.json", "גיל רוזנטל", "פיני טבגר")` <br />
 Output:<br />
+<p align="center">
+  <img width="500" height="500" src="https://github.com/shaybensimon/tdh192/blob/master/results/connection_graph1.png?raw=true">
+</p>
 ![find_connection img](https://github.com/shaybensimon/tdh192/blob/master/results/connection_graph1.png?raw=true)
 
 `find_all_connections("json_graph.json", "גיל רוזנטל", "פיני טבגר", 6)` <br />
