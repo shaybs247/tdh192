@@ -107,20 +107,6 @@ const scrapeAndOrganize = async url => {
         } else actor = { שם: value, שנה: null, דמות: null };
       }
 
-      // if (
-      //   value != "" &&
-      //   ((into_actors && value.indexOf("\t") == -1) || !into_actors)
-      // )
-      //   if (
-      //     !(into_actors || into_brief || into_movie_name || into_awards || into_biography) &&
-      //     value.indexOf(", ") != -1
-      //   ) {
-      //     //multiple entities
-      //     value.split(", ").forEach(element => {
-      //       clean_dict[i++] = element;
-      //     });
-      //   } else clean_dict[i++] = value;
-
       if (
         value != "" &&
         ((into_actors && value.indexOf("\t") == -1) || !into_actors)
@@ -155,6 +141,7 @@ const scrapeAndOrganize = async url => {
 
   return res;
 };
+
 
 //return a promise for movie record as js object
 const scrapeActor = async url => {
@@ -300,30 +287,4 @@ const asyncForEach = async (array, callback, startFrom = 0) => {
   }
 };
 
-// (async () => {
-//   // await getActorsRecord(url1);
-//   const movieUrls = require("./movie-urls.json");
-//   const movieUrlsAsArray = movieUrls["moviesUrls"];
-//   const personsGuid = new Set////();
 
-//   await asyncForEach(movieUrlsAsArray, async (letterArray, index) => {
-//     console.log("letter no. ", index);
-//     await asyncForEach(letterArray, async url => {
-//       console.log(url);
-//       await extractActorsUrls(url, personsGuid);
-//     });
-//   });
-
-//   const personsAsArray = Array.from(personsGuid);
-//   fs.writeFile(
-//     "./persons-urls.json",
-
-//     JSON.stringify({ personsAsArray }),
-
-//     function(err) {
-//       if (err) {
-//         console.error("Crap happens");
-//       }
-//     }
-//   );
-// })();
