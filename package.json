@@ -28,7 +28,7 @@
     "puppeteer": "^1.15.0",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
-    "table-scraper": "^0.1.0",
+    "table-scraper": "^1.0.3",
     "wikibase-sdk": "^7.0.9"
   }
 }
